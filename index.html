@@ -154,8 +154,8 @@
                     </div>
 
                     <div class="bg-white p-6 rounded-xl shadow-md">
-                           <h2 class="text-2xl font-semibold mb-4">System Controls</h2>
-                           <button id="reset-button" class="w-full text-white bg-red-600 hover:bg-red-700 font-medium rounded-lg text-sm px-5 py-2.5">Reset All Scores</button>
+                         <h2 class="text-2xl font-semibold mb-4">System Controls</h2>
+                         <button id="reset-button" class="w-full text-white bg-red-600 hover:bg-red-700 font-medium rounded-lg text-sm px-5 py-2.5">Reset All Scores</button>
                     </div>
                 </div>
 
@@ -163,7 +163,7 @@
                     <div class="bg-white p-6 rounded-xl shadow-md">
                         <h2 class="text-2xl font-semibold mb-4">Grand Winner & Category Awards</h2>
                         <div id="winners-board" class="space-y-8">
-                            </div>
+                        </div>
                     </div>
                     
                     <div class="bg-white p-6 rounded-xl shadow-md">
@@ -171,7 +171,7 @@
                         <div class="overflow-x-auto">
                             <table class="min-w-full divide-y divide-gray-200">
                                 <thead class="bg-gray-50" id="rankings-header">
-                                    </thead>
+                                </thead>
                                 <tbody id="rankings-body" class="bg-white divide-y divide-gray-200"></tbody>
                             </table>
                         </div>
@@ -180,7 +180,7 @@
                     <div class="bg-white p-6 rounded-xl shadow-md">
                         <h2 class="text-2xl font-semibold mb-4">Detailed Scores & Feedback</h2>
                         <div id="feedback-details-board" class="space-y-6">
-                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -539,20 +539,26 @@
                         if(!listEl) return;
                         listEl.innerHTML = '';
 
-                        if (candidates.length === 0) {
-                            listEl.innerHTML = '<p class="text-gray-500">No presenters added yet.</p>';
-                            return;
-                        }
-                        
                         const sessions = {};
+                        // Initialize all possible sessions from the map to ensure they all appear
+                        Object.keys(SESSION_CATEGORY_MAP).forEach(sessionKey => {
+                            sessions[sessionKey] = [];
+                        });
+
                         candidates.forEach(c => {
-                            // Fallback logic and naming convention for sorting unknown sessions to the bottom
                             const sessionKey = c.session || 'zz_Unassigned Session';
-                            if (!sessions[sessionKey]) sessions[sessionKey] = [];
+                            if (!sessions[sessionKey]) {
+                                sessions[sessionKey] = []; // Handle unassigned just in case
+                            }
                             sessions[sessionKey].push(c);
                         });
 
                         const sessionKeys = Object.keys(sessions).sort();
+
+                        if (candidates.length === 0 && sessionKeys.length === 0) {
+                            listEl.innerHTML = '<p class="text-gray-500">No presenters added yet.</p>';
+                            return;
+                        }
 
                         sessionKeys.forEach(sessionKey => {
                             const displayKey = sessionKey.startsWith('zz_') ? sessionKey.substring(3) : sessionKey;
@@ -566,28 +572,33 @@
                             ulList.id = `sortable-${sessionKey.replace(/\W/g, '-')}`;
                             ulList.dataset.session = sessionKey;
 
-                            sessions[sessionKey].forEach(c => {
-                                const isTemporary = c.id.startsWith('temp-');
-                                
-                                const li = document.createElement('li');
-                                li.className = `presenter-item bg-gray-50 hover:bg-gray-100 rounded-lg shadow-sm ${isTemporary ? 'opacity-70' : ''}`;
-                                li.dataset.id = c.id;
-                                li.dataset.session = c.session;
+                            if (sessions[sessionKey].length > 0) {
+                                sessions[sessionKey].forEach(c => {
+                                    const isTemporary = c.id.startsWith('temp-');
+                                    
+                                    const li = document.createElement('li');
+                                    li.className = `presenter-item bg-gray-50 hover:bg-gray-100 rounded-lg shadow-sm ${isTemporary ? 'opacity-70' : ''}`;
+                                    li.dataset.id = c.id;
+                                    li.dataset.session = c.session;
+    
+                                    li.innerHTML = `<div class="flex justify-between items-center p-2">
+                                        <div class="flex items-center space-x-3 drag-handle text-gray-400 hover:text-gray-600 cursor-grab">
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                                <path d="M10 3a1 1 0 011 1v2a1 1 0 11-2 0V4a1 1 0 011-1zM7 7a1 1 0 011-1h4a1 1 0 110 2H8a1 1 0 01-1-1zM4 11a1 1 0 011-1h10a1 1 0 110 2H5a1 1 0 01-1-1zM7 15a1 1 0 011-1h4a1 1 0 110 2H8a1 1 0 01-1-1zM10 18a1 1 0 011-1v2a1 1 0 11-2 0v-2a1 1 0 011 1z"/>
+                                            </svg>
+                                            <span class="text-sm font-medium text-gray-900">${c.orderIndex || '-'}. ${c.name}</span>
+                                            <span class="ml-2 text-xs text-gray-600 bg-gray-200 px-2 py-1 rounded-full">${c.category}</span>
+                                            ${isTemporary ? '<span class="ml-2 text-red-600 bg-red-100 px-2 py-1 rounded-full">Saving...</span>' : ''}
+                                        </div>
+                                        <button data-id="${c.id}" class="delete-candidate-btn text-red-500 hover:text-red-700 text-xs font-bold ${isTemporary ? 'opacity-50 cursor-not-allowed' : ''}" ${isTemporary ? 'disabled' : ''}>DELETE</button>
+                                    </div>`;
+                                    
+                                    ulList.appendChild(li);
+                                });
+                            } else {
+                                ulList.innerHTML = `<p class="text-sm text-gray-400 italic px-2">No presenters assigned to this session yet.</p>`;
+                            }
 
-                                li.innerHTML = `<div class="flex justify-between items-center p-2">
-                                    <div class="flex items-center space-x-3 drag-handle text-gray-400 hover:text-gray-600 cursor-grab">
-                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                                            <path d="M10 3a1 1 0 011 1v2a1 1 0 11-2 0V4a1 1 0 011-1zM7 7a1 1 0 011-1h4a1 1 0 110 2H8a1 1 0 01-1-1zM4 11a1 1 0 011-1h10a1 1 0 110 2H5a1 1 0 01-1-1zM7 15a1 1 0 011-1h4a1 1 0 110 2H8a1 1 0 01-1-1zM10 18a1 1 0 011-1v2a1 1 0 11-2 0v-2a1 1 0 011 1z"/>
-                                        </svg>
-                                        <span class="text-sm font-medium text-gray-900">${c.orderIndex || '-'}. ${c.name}</span>
-                                        <span class="ml-2 text-xs text-gray-600 bg-gray-200 px-2 py-1 rounded-full">${c.category}</span>
-                                        ${isTemporary ? '<span class="ml-2 text-xs text-red-600 bg-red-100 px-2 py-1 rounded-full">Saving...</span>' : ''}
-                                    </div>
-                                    <button data-id="${c.id}" class="delete-candidate-btn text-red-500 hover:text-red-700 text-xs font-bold ${isTemporary ? 'opacity-50 cursor-not-allowed' : ''}" ${isTemporary ? 'disabled' : ''}>DELETE</button>
-                                </div>`;
-                                
-                                ulList.appendChild(li);
-                            });
 
                             sessionGroup.appendChild(ulList);
                             listEl.appendChild(sessionGroup);
@@ -715,7 +726,7 @@
                             let awardClass = 'bg-gray-200 text-gray-800';
                             if (awardInfo) {
                                 awardClass = awardInfo.level === 'Gold' ? 'bg-yellow-400 text-white' : 
-                                             (awardInfo.level === 'Silver' ? 'bg-gray-400 text-white' : 'bg-yellow-600 text-white');
+                                            (awardInfo.level === 'Silver' ? 'bg-gray-400 text-white' : 'bg-yellow-600 text-white');
                             }
                             
                             const row = document.createElement('tr');
@@ -769,7 +780,271 @@
                         }
                     }
                     
-                    // --- Event Listeners ---
+                    async function resetScores() {
+                         if (await showConfirmationModal('Reset All Scores', 'This will delete ALL scores and feedback. This action is irreversible.')) {
+                            const scoresSnapshot = await getDocs(collection(db, `artifacts/${appId}/public/data/scores`));
+                            const feedbackSnapshot = await getDocs(collection(db, `artifacts/${appId}/public/data/feedback`));
+                            const batch = writeBatch(db);
+                            scoresSnapshot.docs.forEach(d => batch.delete(d.ref));
+                            feedbackSnapshot.docs.forEach(d => batch.delete(d.ref));
+                            await batch.commit();
+                         }
+                    }
+
+                    // --- JUDGE VIEW LOGIC ---
+
+                    function initJudgeView() {
+                        const candidatesQuery = query(collection(db, `artifacts/${appId}/public/data/candidates`), where("session", "==", currentJudgeSession), orderBy("orderIndex"));
+                        unsubscribeCandidates = onSnapshot(candidatesQuery, (snapshot) => {
+                            allJudgeCandidates = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                            if (allJudgeCandidates.length > 0 && !currentPresenterId) {
+                                currentPresenterId = allJudgeCandidates[0].id;
+                            }
+                            renderJudgeSidebar();
+                            renderCurrentPresenterCard();
+                            checkFinalSubmissionStatus();
+                        });
+
+                        // Also fetch any scores that might already exist for this judge in this session
+                        fetchAllJudgeScores();
+                    }
+
+                    async function fetchAllJudgeScores() {
+                        const q = query(collection(db, `artifacts/${appId}/public/data/scores`), where("judgeId", "==", currentUser.id));
+                        const scoresSnapshot = await getDocs(q);
+                        scoresSnapshot.forEach(docSnap => {
+                            const scoreData = docSnap.data();
+                            if(!allJudgeScores[scoreData.candidateId]) allJudgeScores[scoreData.candidateId] = {};
+                            allJudgeScores[scoreData.candidateId][scoreData.category] = scoreData.score;
+                        });
+
+                        const feedbackQuery = query(collection(db, `artifacts/${appId}/public/data/feedback`), where("judgeId", "==", currentUser.id));
+                        const feedbackSnapshot = await getDocs(feedbackQuery);
+                        feedbackSnapshot.forEach(docSnap => {
+                            const feedbackData = docSnap.data();
+                            if(!allJudgeScores[feedbackData.candidateId]) allJudgeScores[feedbackData.candidateId] = {};
+                            allJudgeScores[feedbackData.candidateId].feedbackText = feedbackData.feedbackText;
+                        });
+                        
+                        renderJudgeSidebar();
+                        renderCurrentPresenterCard();
+                        checkFinalSubmissionStatus();
+                    }
+
+                    function renderJudgeSidebar() {
+                        const listEl = document.getElementById('judge-sidebar-list');
+                        if (!listEl) return;
+                        listEl.innerHTML = '';
+
+                        if (allJudgeCandidates.length === 0) {
+                            listEl.innerHTML = `<p class="text-gray-500 text-sm">No presenters in this session.</p>`;
+                            return;
+                        }
+
+                        allJudgeCandidates.forEach(c => {
+                            const isScored = allJudgeScores[c.id] && Object.keys(allJudgeScores[c.id]).length > 0;
+                            const div = document.createElement('div');
+                            div.className = `sidebar-item p-3 rounded-md flex justify-between items-center ${currentPresenterId === c.id ? 'active-card' : ''}`;
+                            div.dataset.id = c.id;
+                            div.innerHTML = `<span>${c.orderIndex}. ${c.name}</span>
+                                ${isScored ? `<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-green-500" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" /></svg>` : ''}
+                            `;
+                            div.onclick = () => {
+                                currentPresenterId = c.id;
+                                renderJudgeSidebar();
+                                renderCurrentPresenterCard();
+                            };
+                            listEl.appendChild(div);
+                        });
+                    }
+
+                    function renderCurrentPresenterCard() {
+                        const cardContainer = document.getElementById('judge-presenter-card');
+                        if (!cardContainer) return;
+
+                        if (!currentPresenterId || allJudgeCandidates.length === 0) {
+                            cardContainer.innerHTML = `<p class="text-center text-gray-500 text-xl" id="judge-status-message">Select a presenter from the list to begin scoring.</p>`;
+                            return;
+                        }
+
+                        const presenter = allJudgeCandidates.find(p => p.id === currentPresenterId);
+                        if (!presenter) {
+                             cardContainer.innerHTML = `<p class="text-center text-gray-500 text-xl">Error: Presenter not found.</p>`;
+                             return;
+                        }
+
+                        const criteria = CATEGORIES[presenter.category];
+                        const maxTotal = criteria.reduce((sum, crit) => sum + crit.max, 0);
+
+                        const criteriaHTML = criteria.map(crit => {
+                            const fieldId = `score-${presenter.id}-${crit.name.replace(/\W/g, '-')}`;
+                            const existingScore = (allJudgeScores[presenter.id] && allJudgeScores[presenter.id][crit.name]) || '';
+                            return `<div class="space-y-1">
+                                <div class="flex justify-between items-center">
+                                    <label for="${fieldId}" class="text-sm font-medium text-gray-800">${crit.name} (Max: ${crit.max})</label>
+                                    <input type="number" id="${fieldId}" name="${crit.name}" value="${existingScore}" data-max="${crit.max}" min="0" max="${crit.max}" class="score-input w-20 text-center bg-gray-50 border border-gray-300 text-sm rounded-lg p-1.5" required>
+                                </div>
+                                <p class="text-xs text-gray-500">${crit.desc}</p>
+                            </div>`;
+                        }).join('');
+                        
+                        const existingFeedback = (allJudgeScores[presenter.id] && allJudgeScores[presenter.id].feedbackText) || '';
+
+                        cardContainer.innerHTML = `
+                            <h2 class="text-3xl font-bold mb-1">${presenter.orderIndex}. ${presenter.name}</h2>
+                            <p class="text-md text-gray-500 mb-6">${presenter.session}</p>
+                            <form data-candidate-id="${presenter.id}" class="candidate-score-form space-y-4">
+                                <div class="space-y-4">${criteriaHTML}</div>
+                                <div class="text-right font-bold text-lg pt-4 border-t">Total: <span class="total-score">0</span> / ${maxTotal}</div>
+                                <div class="mt-4 pt-4 border-t">
+                                    <label for="feedback-${presenter.id}" class="block text-sm font-medium text-gray-700 mb-1">Feedback</label>
+                                    <textarea id="feedback-${presenter.id}" rows="3" class="w-full bg-gray-50 border border-gray-300 text-sm rounded-lg p-2">${existingFeedback}</textarea>
+                                </div>
+                                <button type="submit" class="w-full mt-4 text-white bg-indigo-600 hover:bg-indigo-700 font-medium rounded-lg text-sm px-5 py-2.5">Save & Next</button>
+                            </form>
+                        `;
+
+                        const form = cardContainer.querySelector('form');
+                        updateLiveTotal(form); // Initial calculation
+                        form.addEventListener('input', (e) => {
+                             if (e.target.classList.contains('score-input')) {
+                                const input = e.target;
+                                const max = parseInt(input.dataset.max, 10);
+                                if (parseInt(input.value) > max) input.value = max;
+                                if (parseInt(input.value) < 0) input.value = 0;
+                                updateLiveTotal(form);
+                            }
+                        });
+                        form.addEventListener('submit', handleScoreSave);
+                    }
+                    
+                    function updateLiveTotal(form) {
+                         let total = 0;
+                         form.querySelectorAll('.score-input').forEach(i => { total += parseInt(i.value, 10) || 0; });
+                         form.querySelector('.total-score').textContent = total;
+                    }
+                    
+                    function handleScoreSave(e) {
+                        e.preventDefault();
+                        if (isSubmittingScore) return;
+                        
+                        const form = e.target;
+                        const candidateId = form.dataset.candidateId;
+                        
+                        if(!allJudgeScores[candidateId]) allJudgeScores[candidateId] = {};
+                        
+                        let isComplete = true;
+                        form.querySelectorAll('.score-input').forEach(input => {
+                            const category = input.name;
+                            const score = parseInt(input.value, 10);
+                            if(isNaN(score)) isComplete = false;
+                            allJudgeScores[candidateId][category] = isNaN(score) ? null : score;
+                        });
+
+                        if (!isComplete) {
+                            alert('Please fill in all score fields for this presenter.');
+                            return;
+                        }
+                        
+                        allJudgeScores[candidateId].feedbackText = form.querySelector('textarea').value;
+
+                        // Move to the next presenter
+                        const currentIndex = allJudgeCandidates.findIndex(c => c.id === candidateId);
+                        if (currentIndex < allJudgeCandidates.length - 1) {
+                            currentPresenterId = allJudgeCandidates[currentIndex + 1].id;
+                        } else {
+                            // Last presenter, stay on this card
+                            alert('All presenters for this session have been scored. Review your scores and then click "Confirm All Scores".');
+                        }
+
+                        renderJudgeSidebar();
+                        renderCurrentPresenterCard();
+                        checkFinalSubmissionStatus();
+                    }
+                    
+                    function checkFinalSubmissionStatus() {
+                        const submitButton = document.getElementById('final-submit-button');
+                        if(!submitButton) return;
+                        const allScored = allJudgeCandidates.every(c => {
+                           const scores = allJudgeScores[c.id];
+                           if (!scores) return false;
+                           const criteria = CATEGORIES[c.category];
+                           return criteria.every(crit => scores[crit.name] !== null && scores[crit.name] !== undefined);
+                        });
+
+                        submitButton.disabled = !allScored;
+                    }
+                    
+                    async function handleFinalSubmit() {
+                        if (isSubmittingScore) return;
+
+                        const confirmationMessage = `You are about to submit all scores for this session. This action cannot be undone. Are you sure?`;
+                        if (await showConfirmationModal('Final Submission', confirmationMessage)) {
+                            isSubmittingScore = true;
+                            const submitButton = document.getElementById('final-submit-button');
+                            submitButton.textContent = 'Submitting...';
+                            submitButton.disabled = true;
+
+                            const batch = writeBatch(db);
+
+                            for (const candidateId in allJudgeScores) {
+                                const scores = allJudgeScores[candidateId];
+                                const candidate = allJudgeCandidates.find(c => c.id === candidateId);
+                                if (!candidate) continue;
+
+                                const criteria = CATEGORIES[candidate.category];
+                                criteria.forEach(crit => {
+                                     const score = scores[crit.name];
+                                     if(score !== null && score !== undefined) {
+                                        const scoreId = `${candidateId}-${currentUser.id}-${crit.name.replace(/\W/g, '-')}`;
+                                        const scoreRef = doc(db, `artifacts/${appId}/public/data/scores`, scoreId);
+                                        batch.set(scoreRef, { candidateId, judgeId: currentUser.id, judgeName: currentUser.name, category: crit.name, score: score });
+                                     }
+                                });
+                                
+                                const feedbackText = scores.feedbackText || '';
+                                const feedbackId = `${candidateId}_${currentUser.id}`;
+                                const feedbackRef = doc(db, `artifacts/${appId}/public/data/feedback`, feedbackId);
+                                batch.set(feedbackRef, { candidateId, judgeId: currentUser.id, feedbackText: feedbackText });
+                            }
+
+                            try {
+                                await batch.commit();
+                                alert('All scores submitted successfully!');
+                                // Optionally, disable further editing or log out
+                                document.getElementById('judge-presenter-card').innerHTML = `<p class="text-center text-2xl text-green-600 font-bold">Thank you! Your scores for this session have been submitted.</p>`;
+                                document.getElementById('final-submit-button').textContent = 'Submitted';
+                            } catch (error) {
+                                console.error("Error submitting final scores:", error);
+                                alert("An error occurred during final submission. Please try again.");
+                                submitButton.textContent = 'Confirm All Scores';
+                                submitButton.disabled = false;
+                            } finally {
+                                isSubmittingScore = false;
+                            }
+                        }
+                    }
+
+                    function showConfirmationModal(title, message) {
+                        return new Promise((resolve) => {
+                            const modal = document.getElementById('confirmation-modal');
+                            modal.querySelector('#modal-title').textContent = title;
+                            modal.querySelector('#modal-message').textContent = message;
+                            modal.classList.add('active');
+                            const confirmBtn = modal.querySelector('#modal-confirm-btn');
+                            const cancelBtn = modal.querySelector('#modal-cancel-btn');
+                            const close = (result) => {
+                                modal.classList.remove('active');
+                                confirmBtn.replaceWith(confirmBtn.cloneNode(true));
+                                cancelBtn.replaceWith(cancelBtn.cloneNode(true));
+                                resolve(result);
+                            };
+                            modal.querySelector('#modal-confirm-btn').onclick = () => close(true);
+                            modal.querySelector('#modal-cancel-btn').onclick = () => close(false);
+                        });
+                    }
+                    
+                    // --- Initial Event Listeners ---
                     document.getElementById('login-form').addEventListener('submit', handleLogin);
                     document.getElementById('role').addEventListener('change', (e) => {
                         const passwordField = document.getElementById('admin-password-field');
@@ -786,9 +1061,12 @@
                     }
 
                     document.getElementById('add-candidate-form').addEventListener('submit', handleAddCandidate);
-                    document.getElementById('reset-button').addEventListener('click', handleResetScores);
+                    document.getElementById('reset-button').addEventListener('click', resetScores);
                     document.getElementById('admin-logout').addEventListener('click', handleLogout);
                     document.getElementById('judge-logout').addEventListener('click', handleLogout);
+                    
+                    const finalSubmitBtn = document.getElementById('final-submit-button');
+                    if(finalSubmitBtn) finalSubmitBtn.addEventListener('click', handleFinalSubmit);
                     
                     showView('login');
                 })();
@@ -797,3 +1075,4 @@
     </script>
 </body>
 </html>
+
