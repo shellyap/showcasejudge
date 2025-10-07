@@ -6,6 +6,9 @@
     <title>PPKBIS Showcase Judge Login</title>
     <script src="https://cdn-tailwindcss.vercel.app/"></script>
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+    <!-- jsPDF Libraries for PDF Generation -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.23/jspdf.plugin.autotable.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
         body {
@@ -97,11 +100,13 @@
                         </div>
                         <div id="session-field" class="mb-6">
                             <label for="session" class="block mb-2 text-sm font-medium text-gray-900">Select Session</label>
+                            <!-- UPDATED: New session list for Judge Login -->
                             <select id="session" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-indigo-500 focus:border-indigo-500 block w-full p-2.5">
-                                <option value="Session 1 (Poster)">Session 1 (Poster)</option>
-                                <option value="Session 2 (Oral)">Session 2 (Oral)</option>
-                                <option value="Session 3 (Workshop)">Session 3 (Workshop)</option>
-                                <option value="Session 4 (Poster)">Session 4 (Poster)</option>
+                                <option value="Showcase 1 (Poster 1st Session)">Showcase 1 (Poster 1st Session)</option>
+                                <option value="Showcase 2 (Oral 1st Session)">Showcase 2 (Oral 1st Session)</option>
+                                <option value="Showcase 3 (Poster 2nd Session)">Showcase 3 (Poster 2nd Session)</option>
+                                <option value="Showcase 4 (Oral 2nd Session)">Showcase 4 (Oral 2nd Session)</option>
+                                <option value="Showcase 5 (Workshop)">Showcase 5 (Workshop)</option>
                             </select>
                         </div>
                         <div id="admin-password-field" class="mb-6" style="display: none;">
@@ -126,12 +131,14 @@
                         <h2 class="text-2xl font-semibold mb-4">Add Presenter</h2>
                         <form id="add-candidate-form" class="space-y-4">
                             <input type="text" id="candidate-name" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg block w-full p-2.5" placeholder="Presenter Name" required>
+                            <!-- UPDATED: New session list for Admin "Add Presenter" form -->
                             <select id="candidate-session" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg block w-full p-2.5" required>
                                 <option value="" disabled selected>Select Session</option>
-                                <option value="Session 1 (Poster)">Session 1 (Poster)</option>
-                                <option value="Session 2 (Oral)">Session 2 (Oral)</option>
-                                <option value="Session 3 (Workshop)">Session 3 (Workshop)</option>
-                                <option value="Session 4 (Poster)">Session 4 (Poster)</option>
+                                <option value="Showcase 1 (Poster 1st Session)">Showcase 1 (Poster 1st Session)</option>
+                                <option value="Showcase 2 (Oral 1st Session)">Showcase 2 (Oral 1st Session)</option>
+                                <option value="Showcase 3 (Poster 2nd Session)">Showcase 3 (Poster 2nd Session)</option>
+                                <option value="Showcase 4 (Oral 2nd Session)">Showcase 4 (Oral 2nd Session)</option>
+                                <option value="Showcase 5 (Workshop)">Showcase 5 (Workshop)</option>
                             </select>
                             <select id="candidate-category" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg block w-full p-2.5" disabled>
                                 <option value="Poster">Poster Presentation</option>
@@ -155,13 +162,17 @@
 
                     <div class="bg-white p-6 rounded-xl shadow-md">
                          <h2 class="text-2xl font-semibold mb-4">System Controls</h2>
-                         <button id="reset-button" class="w-full text-white bg-red-600 hover:bg-red-700 font-medium rounded-lg text-sm px-5 py-2.5">Reset All Scores</button>
+                         <div class="space-y-2">
+                             <button id="download-pdf-button" class="w-full text-white bg-blue-600 hover:bg-blue-700 font-medium rounded-lg text-sm px-5 py-2.5">Download Results as PDF</button>
+                             <button id="reset-scores-button" class="w-full text-white bg-orange-600 hover:bg-orange-700 font-medium rounded-lg text-sm px-5 py-2.5">Reset All Scores Only</button>
+                             <button id="reset-all-button" class="w-full text-white bg-red-600 hover:bg-red-700 font-medium rounded-lg text-sm px-5 py-2.5">Reset Everything (Presenters & Scores)</button>
+                         </div>
                     </div>
                 </div>
 
                 <div class="lg:col-span-2 space-y-6">
                     <div class="bg-white p-6 rounded-xl shadow-md">
-                        <h2 class="text-2xl font-semibold mb-4">Grand Winner & Category Awards</h2>
+                        <h2 class="text-2xl font-semibold mb-4">Grand Winners & Category Awards</h2>
                         <div id="winners-board" class="space-y-8">
                         </div>
                     </div>
@@ -199,6 +210,9 @@
                 <div id="judge-sidebar-wrapper" class="md:col-span-1 bg-white p-4 rounded-xl shadow-md space-y-4">
                     <div class="space-y-1">
                         <h3 class="text-xl font-semibold text-gray-800 mb-4 border-b pb-2">Presenter List</h3>
+                        <p class="text-xs text-gray-500 bg-indigo-50 p-2 rounded-md mb-3">
+                            Click on any presenter to view or amend their scores before final submission.
+                        </p>
                         <div id="judge-sidebar-list" class="space-y-1">
                             <p class="text-gray-500 text-sm">Loading...</p>
                         </div>
@@ -206,7 +220,7 @@
                     
                     <div class="border-t pt-4">
                         <button id="final-submit-button" class="w-full text-white bg-green-600 hover:bg-green-700 font-medium rounded-lg text-sm px-5 py-2.5 disabled:opacity-50" disabled>
-                            Confirm All Scores
+                            Submit All Scores
                         </button>
                     </div>
                 </div>
@@ -233,6 +247,8 @@
 
     <script type="module">
         document.addEventListener("DOMContentLoaded", () => {
+            const { jsPDF } = window.jspdf;
+
             const firebaseApp = "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
             const firebaseAuth = "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
             const firebaseFirestore = "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
@@ -270,11 +286,13 @@
                     } else { await signInAnonymously(auth); }
                     const userId = auth.currentUser?.uid || `anonymous-${crypto.randomUUID()}`;
 
+                    // UPDATED: New Session-to-Category mapping.
                     const SESSION_CATEGORY_MAP = {
-                        'Session 1 (Poster)': 'Poster',
-                        'Session 2 (Oral)': 'Oral',
-                        'Session 3 (Workshop)': 'Workshop',
-                        'Session 4 (Poster)': 'Poster'
+                        'Showcase 1 (Poster 1st Session)': 'Poster',
+                        'Showcase 2 (Oral 1st Session)': 'Oral',
+                        'Showcase 3 (Poster 2nd Session)': 'Poster',
+                        'Showcase 4 (Oral 2nd Session)': 'Oral',
+                        'Showcase 5 (Workshop)': 'Workshop'
                     };
                     const CATEGORIES = {
                         'Poster': [
@@ -299,9 +317,16 @@
                     const CATEGORY_NAMES = Object.keys(CATEGORIES);
                     const FIXED_JUDGE_COUNT = 3;
 
+                    const AWARD_CAPS = {
+                        'Poster': { gold: 5, silver: 7 },
+                        'Oral': { gold: 2, silver: 5 },
+                        'Workshop': { gold: 2, silver: 5 }
+                    };
+
                     let currentUser = null;
                     let unsubscribeCandidates = () => {};
                     let unsubscribeScores = () => {};
+                    let unsubscribeFeedbacks = () => {};
                     let unsubscribePresence = () => {};
                     let presenceInterval = null;
                     
@@ -331,6 +356,13 @@
                             categorySelect.value = category;
                         }
                     }
+                    
+                    const updatePresence = () => {
+                        if (!currentUser) return;
+                        const presenceRef = doc(db, `artifacts/${appId}/public/data/presence`, currentUser.id);
+                        setDoc(presenceRef, { name: currentUser.name, lastSeen: serverTimestamp() })
+                            .catch(err => console.error("Could not update presence:", err));
+                    };
 
                     async function handleLogin(e) {
                         e.preventDefault();
@@ -358,8 +390,6 @@
                         } else { 
                             document.getElementById('judge-header').textContent = `Judge Panel - ${currentUser.name}`;
                             document.getElementById('current-session-display').textContent = `Session: ${currentJudgeSession}`;
-                            const presenceRef = doc(db, `artifacts/${appId}/public/data/presence`, currentUser.id);
-                            const updatePresence = () => setDoc(presenceRef, { name: currentUser.name, lastSeen: serverTimestamp() });
                             await updatePresence();
                             presenceInterval = setInterval(updatePresence, 20000); 
                             showView('judge'); 
@@ -368,54 +398,60 @@
                     }
 
                     async function handleLogout() {
-                        if (currentUser.role === 'judge') {
+                        if (currentUser && currentUser.role === 'judge') {
                             clearInterval(presenceInterval);
                             await deleteDoc(doc(db, `artifacts/${appId}/public/data/presence`, currentUser.id));
                         }
                         unsubscribeCandidates();
                         unsubscribeScores();
+                        unsubscribeFeedbacks();
                         unsubscribePresence();
                         currentUser = null;
                         currentJudgeSession = null;
                         currentPresenterId = null;
                         document.getElementById('username').value = '';
-                        document.getElementById('session').value = 'Session 1 (Poster)';
+                        // UPDATED: Reset login dropdown to the first new session name
+                        document.getElementById('session').value = 'Showcase 1 (Poster 1st Session)';
                         showView('login');
                     }
 
                     // --- ADMIN VIEW LOGIC ---
+                     function renderOnlineJudges(presenceDocs) {
+                         const listEl = document.getElementById('judges-online-list');
+                         if(!listEl) return;
+                         listEl.innerHTML = '';
+                         const now = Date.now();
+                         presenceDocs.forEach(docSnap => {
+                             const data = docSnap.data();
+                             if (data.lastSeen && (now - data.lastSeen.toDate().getTime()) < 30000) { // 30 second threshold
+                                 const div = document.createElement('div');
+                                 div.className = 'flex items-center bg-gray-100 p-2 rounded-lg';
+                                 div.innerHTML = `<span class="online-indicator mr-3"></span><span class="font-medium text-gray-700">${data.name}</span>`;
+                                 listEl.appendChild(div);
+                             }
+                         });
+                          if (!listEl.hasChildNodes()) {
+                             listEl.innerHTML = '<p class="text-gray-500 text-sm">No judges currently online.</p>';
+                         }
+                    }
 
                     function initAdminView() {
-                        // 1. Candidate Listener (Primary trigger for all dashboard updates)
-                        unsubscribeCandidates = onSnapshot(query(collection(db, `artifacts/${appId}/public/data/candidates`), orderBy("session"), orderBy("orderIndex")), async (candidateSnapshot) => {
+                        unsubscribeCandidates = onSnapshot(query(collection(db, `artifacts/${appId}/public/data/candidates`)), async (candidateSnapshot) => {
                             adminCandidates = candidateSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                            
-                            // Fetch scores and feedback in parallel for initial and candidate list changes
-                            const [scoreSnapshot, feedbackSnapshot] = await Promise.all([
-                                getDocs(collection(db, `artifacts/${appId}/public/data/scores`)),
-                                getDocs(collection(db, `artifacts/${appId}/public/data/feedback`))
-                            ]);
-                            
-                            adminScores = scoreSnapshot.docs.map(d => d.data());
-                            adminFeedbacks = feedbackSnapshot.docs.map(d => d.data());
-                            
                             renderAdminCandidateList(adminCandidates);
                             calculateAndDisplayResults(adminCandidates, adminScores, adminFeedbacks);
                         });
 
-                        // 2. Scores Listener (Secondary trigger for instant score-only updates)
                         unsubscribeScores = onSnapshot(collection(db, `artifacts/${appId}/public/data/scores`), async (scoreSnapshot) => {
-                            if (adminCandidates.length === 0) return;
-
                             adminScores = scoreSnapshot.docs.map(d => d.data());
-                            
-                            const feedbackSnapshot = await getDocs(collection(db, `artifacts/${appId}/public/data/feedback`));
-                            adminFeedbacks = feedbackSnapshot.docs.map(d => d.data());
-
                             calculateAndDisplayResults(adminCandidates, adminScores, adminFeedbacks);
                         });
                         
-                        // 3. Presence Listener
+                        unsubscribeFeedbacks = onSnapshot(collection(db, `artifacts/${appId}/public/data/feedback`), (snapshot) => {
+                            adminFeedbacks = snapshot.docs.map(d => d.data());
+                            calculateAndDisplayResults(adminCandidates, adminScores, adminFeedbacks);
+                        });
+                        
                         unsubscribePresence = onSnapshot(collection(db, `artifacts/${appId}/public/data/presence`), (snapshot) => {
                             renderOnlineJudges(snapshot.docs);
                         });
@@ -442,33 +478,15 @@
                             return;
                         }
                         
-                        try {
-                            const tempId = `temp-${Date.now()}`;
-                            const newCandidate = { id: tempId, name: candidateName, session: session, category: category, orderIndex: orderIndex };
-                            
-                            // UX Optimization: Render immediately before Firestore confirms
-                            const updatedCandidates = [...adminCandidates, newCandidate].sort((a, b) => {
-                                if (a.session !== b.session) return a.session.localeCompare(b.session);
-                                return a.orderIndex - b.orderIndex;
-                            });
-                            renderAdminCandidateList(updatedCandidates);
-                            
-                            // Firestore write
-                            await addDoc(collection(db, `artifacts/${appId}/public/data/candidates`), { 
-                                name: candidateName, 
-                                session: session,
-                                category: category,
-                                orderIndex: orderIndex
-                            });
+                        await addDoc(collection(db, `artifacts/${appId}/public/data/candidates`), { 
+                            name: candidateName, 
+                            session: session,
+                            category: category,
+                            orderIndex: orderIndex
+                        });
 
-                            candidateNameInput.value = '';
-                            document.getElementById('candidate-order').value = '';
-
-                        } catch (error) {
-                            console.error("Error adding candidate:", error);
-                            alert("Error adding presenter. Check console for details.");
-                            renderAdminCandidateList(adminCandidates);
-                        }
+                        candidateNameInput.value = '';
+                        document.getElementById('candidate-order').value = '';
                     }
 
                     async function deleteCandidate(candidateId) {
@@ -481,12 +499,9 @@
                             const scoresSnapshot = await getDocs(scoresQuery);
                             scoresSnapshot.docs.forEach(d => batch.delete(d.ref));
 
-                            const feedbackSnapshot = await getDocs(collection(db, `artifacts/${appId}/public/data/feedback`));
-                            feedbackSnapshot.docs.forEach(d => {
-                                if (d.data().candidateId === candidateId || d.id.startsWith(`${candidateId}_`)) {
-                                    batch.delete(d.ref);
-                                }
-                            });
+                            const feedbackQuery = query(collection(db, `artifacts/${appId}/public/data/feedback`), where("candidateId", "==", candidateId));
+                            const feedbackSnapshot = await getDocs(feedbackQuery);
+                            feedbackSnapshot.docs.forEach(d => batch.delete(d.ref));
 
                             await batch.commit();
                         }
@@ -540,7 +555,6 @@
                         listEl.innerHTML = '';
 
                         const sessions = {};
-                        // Initialize all possible sessions from the map to ensure they all appear
                         Object.keys(SESSION_CATEGORY_MAP).forEach(sessionKey => {
                             sessions[sessionKey] = [];
                         });
@@ -548,7 +562,7 @@
                         candidates.forEach(c => {
                             const sessionKey = c.session || 'zz_Unassigned Session';
                             if (!sessions[sessionKey]) {
-                                sessions[sessionKey] = []; // Handle unassigned just in case
+                                sessions[sessionKey] = [];
                             }
                             sessions[sessionKey].push(c);
                         });
@@ -573,11 +587,9 @@
                             ulList.dataset.session = sessionKey;
 
                             if (sessions[sessionKey].length > 0) {
-                                sessions[sessionKey].forEach(c => {
-                                    const isTemporary = c.id.startsWith('temp-');
-                                    
+                                sessions[sessionKey].sort((a,b)=> (a.orderIndex || 0) - (b.orderIndex || 0)).forEach(c => {
                                     const li = document.createElement('li');
-                                    li.className = `presenter-item bg-gray-50 hover:bg-gray-100 rounded-lg shadow-sm ${isTemporary ? 'opacity-70' : ''}`;
+                                    li.className = `presenter-item bg-gray-50 hover:bg-gray-100 rounded-lg shadow-sm`;
                                     li.dataset.id = c.id;
                                     li.dataset.session = c.session;
     
@@ -588,9 +600,8 @@
                                             </svg>
                                             <span class="text-sm font-medium text-gray-900">${c.orderIndex || '-'}. ${c.name}</span>
                                             <span class="ml-2 text-xs text-gray-600 bg-gray-200 px-2 py-1 rounded-full">${c.category}</span>
-                                            ${isTemporary ? '<span class="ml-2 text-red-600 bg-red-100 px-2 py-1 rounded-full">Saving...</span>' : ''}
                                         </div>
-                                        <button data-id="${c.id}" class="delete-candidate-btn text-red-500 hover:text-red-700 text-xs font-bold ${isTemporary ? 'opacity-50 cursor-not-allowed' : ''}" ${isTemporary ? 'disabled' : ''}>DELETE</button>
+                                        <button data-id="${c.id}" class="delete-candidate-btn text-red-500 hover:text-red-700 text-xs font-bold">DELETE</button>
                                     </div>`;
                                     
                                     ulList.appendChild(li);
@@ -599,7 +610,6 @@
                                 ulList.innerHTML = `<p class="text-sm text-gray-400 italic px-2">No presenters assigned to this session yet.</p>`;
                             }
 
-
                             sessionGroup.appendChild(ulList);
                             listEl.appendChild(sessionGroup);
                         });
@@ -607,18 +617,53 @@
                         initSortableLists();
 
                         document.querySelectorAll('.delete-candidate-btn').forEach(btn => btn.onclick = (e) => {
-                            if (!e.target.disabled) deleteCandidate(btn.dataset.id);
+                            deleteCandidate(e.target.dataset.id);
                         });
                     }
                     
+                    /**
+                     * A reusable function to determine winners based on ranking caps.
+                     * This ensures consistency between the live dashboard and the PDF report.
+                     */
+                    function calculateWinners(fullyJudgedResults) {
+                        const categoryWinners = {};
+                        const winnerMap = new Map();
+
+                        CATEGORY_NAMES.forEach(cat => {
+                            const catResults = fullyJudgedResults.filter(r => r.category === cat).sort((a, b) => b.average - a.average);
+                            const caps = AWARD_CAPS[cat];
+
+                            const goldWinners = catResults.slice(0, caps.gold);
+                            const goldWinnerIds = new Set(goldWinners.map(w => w.id));
+
+                            const remainingForSilver = catResults.filter(r => !goldWinnerIds.has(r.id));
+                            const silverWinners = remainingForSilver.slice(0, caps.silver);
+                            const silverWinnerIds = new Set(silverWinners.map(w => w.id));
+
+                            const bronzeWinners = catResults.filter(r => {
+                                return !goldWinnerIds.has(r.id) && !silverWinnerIds.has(r.id) && r.average >= 55;
+                            });
+
+                            categoryWinners[cat] = { gold: goldWinners, silver: silverWinners, bronze: bronzeWinners };
+
+                            goldWinners.forEach(r => winnerMap.set(r.id, { level: 'Gold', class: 'bg-yellow-400 text-white' }));
+                            silverWinners.forEach(r => winnerMap.set(r.id, { level: 'Silver', class: 'bg-gray-400 text-white' }));
+                            bronzeWinners.forEach(r => winnerMap.set(r.id, { level: 'Bronze', class: 'bg-yellow-600 text-white' }));
+                        });
+
+                        return { categoryWinners, winnerMap };
+                    }
+
                     function calculateAndDisplayResults(candidates, scores, feedbacks) {
+                        if (!candidates || !scores || !feedbacks) return;
+                        
                         const judges = [...new Set(scores.map(s => s.judgeName))].sort();
                         
                         let results = candidates.map(c => {
                             const scoresByJudge = {};
                             judges.forEach(j => {
                                 const judgeScores = scores.filter(s => s.candidateId === c.id && s.judgeName === j);
-                                scoresByJudge[j] = judgeScores.reduce((sum, s) => sum + s.score, 0);
+                                scoresByJudge[j] = judgeScores.reduce((sum, s) => sum + (s.score || 0), 0);
                             });
                             const totalScores = Object.values(scoresByJudge).filter(s => s > 0);
                             const judgeCount = totalScores.length;
@@ -628,29 +673,18 @@
 
                         const fullyJudged = results.filter(r => r.judgeCount === FIXED_JUDGE_COUNT);
                         
-                        const winnerMap = new Map();
-                        const categoryWinners = {};
-                        
-                        CATEGORY_NAMES.forEach(cat => {
-                            const catResults = fullyJudged.filter(r => r.category === cat);
-                            const gold = catResults.filter(r => r.average >= 85).sort((a,b) => b.average - a.average);
-                            const silver = catResults.filter(r => r.average >= 70 && r.average < 85).sort((a,b) => b.average - a.average);
-                            const bronze = catResults.filter(r => r.average >= 55 && r.average < 70).sort((a,b) => b.average - a.average);
-                            
-                            categoryWinners[cat] = { gold, silver, bronze };
-                            
-                            [...gold, ...silver, ...bronze].forEach(r => {
-                                if (r.average >= 85) winnerMap.set(r.id, {level: 'Gold', class: 'bg-yellow-400 text-white'});
-                                else if (r.average >= 70) winnerMap.set(r.id, {level: 'Silver', class: 'bg-gray-400 text-white'});
-                                else if (r.average >= 55) winnerMap.set(r.id, {level: 'Bronze', class: 'bg-yellow-600 text-white'});
-                            });
-                        });
+                        // Use the consistent winner calculation function
+                        const { categoryWinners, winnerMap } = calculateWinners(fullyJudged);
                         
                         results.forEach(r => {
                             if(winnerMap.has(r.id)) r.award = winnerMap.get(r.id).level;
                         });
 
-                        const rankings = results.sort((a, b) => b.average - a.average);
+                        const rankings = results.sort((a, b) => {
+                             if (b.average !== a.average) return b.average - a.average;
+                             if (a.session !== b.session) return (a.session || "").localeCompare(b.session || "");
+                             return (a.orderIndex || 0) - (b.orderIndex || 0);
+                        });
 
                         // --- Render Winner Board (Real-Time Update) ---
                         const winnersBoard = document.getElementById('winners-board');
@@ -659,13 +693,21 @@
                         
                         // 1. Grand Winner Section
                         const overallRanking = fullyJudged.sort((a,b) => b.average - a.average);
-                        const grandWinner = overallRanking.length > 0 ? overallRanking[0] : null;
+                        const grandWinners = overallRanking.slice(0, 3);
 
                         let grandWinnerHTML = `<div class="text-center p-6 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-xl shadow-lg mb-8">
-                            <h3 class="text-2xl font-bold text-white uppercase tracking-wider">Overall Grand Winner (Highest Average Score)</h3>`;
-                        if (grandWinner) {
-                            grandWinnerHTML += `<p class="text-4xl font-extrabold text-white mt-2">${grandWinner.name} (${grandWinner.category})</p>
-                                <p class="text-lg font-medium text-indigo-100">Overall Score: ${grandWinner.average.toFixed(2)}</p>`;
+                            <h3 class="text-2xl font-bold text-white uppercase tracking-wider">Top 3 Grand Winners (Highest Average Score)</h3>`;
+                        if (grandWinners.length > 0) {
+                             grandWinnerHTML += `<div class="mt-4 grid grid-cols-1 md:grid-cols-3 gap-4 text-white">`;
+                             const places = ['1st Place', '2nd Place', '3rd Place'];
+                             grandWinners.forEach((winner, index) => {
+                                 grandWinnerHTML += `<div>
+                                     <p class="text-lg font-bold">${places[index]}</p>
+                                     <p class="text-2xl font-extrabold">${winner.name}</p>
+                                     <p class="text-md font-medium text-indigo-200">(${winner.category}) - ${winner.average.toFixed(2)}</p>
+                                 </div>`;
+                             });
+                             grandWinnerHTML += `</div>`;
                         } else {
                             grandWinnerHTML += `<p class="text-xl font-semibold text-white mt-2">- Awaiting ${FIXED_JUDGE_COUNT} scores -</p>`;
                         }
@@ -680,6 +722,7 @@
 
                         CATEGORY_NAMES.forEach(cat => {
                             const catData = categoryWinners[cat];
+                            const caps = AWARD_CAPS[cat];
                             
                             const renderCategoryTier = (title, winners, colorClass) => {
                                 let html = `<div class="mt-2"><p class="font-medium text-sm text-gray-700">${title} (${winners.length}):</p>`;
@@ -696,9 +739,9 @@
 
                             let categoryHTML = `<div class="bg-gray-100 p-4 rounded-lg shadow-sm h-full flex flex-col">
                                 <h4 class="text-xl font-bold text-indigo-700 mb-3 border-b pb-2">${cat}</h4>
-                                ${renderCategoryTier('Gold (>=85)', catData.gold, 'bg-yellow-600')}
-                                ${renderCategoryTier('Silver (70-84)', catData.silver, 'bg-gray-500')}
-                                ${renderCategoryTier('Bronze (55-69)', catData.bronze, 'bg-amber-700')}
+                                ${renderCategoryTier(`Gold (Top ${caps.gold})`, catData.gold, 'bg-yellow-600')}
+                                ${renderCategoryTier(`Silver (Next ${caps.silver})`, catData.silver, 'bg-gray-500')}
+                                ${renderCategoryTier('Bronze (>=55)', catData.bronze, 'bg-amber-700')}
                             </div>`;
                             
                             categoryCardContainer.innerHTML += categoryHTML;
@@ -723,10 +766,10 @@
                         rankingsBody.innerHTML = '';
                         rankings.forEach(r => {
                             const awardInfo = winnerMap.get(r.id);
-                            let awardClass = 'bg-gray-200 text-gray-800';
+                            let awardClass = '';
                             if (awardInfo) {
                                 awardClass = awardInfo.level === 'Gold' ? 'bg-yellow-400 text-white' : 
-                                            (awardInfo.level === 'Silver' ? 'bg-gray-400 text-white' : 'bg-yellow-600 text-white');
+                                             (awardInfo.level === 'Silver' ? 'bg-gray-400 text-white' : 'bg-yellow-600 text-white');
                             }
                             
                             const row = document.createElement('tr');
@@ -740,6 +783,7 @@
                         });
 
                         // --- Render Detailed Feedback Board (Real-Time Update) ---
+                        // REFINED: This section is now organized by category.
                         const feedbackBoard = document.getElementById('feedback-details-board');
                         if(!feedbackBoard) return;
                         feedbackBoard.innerHTML = '';
@@ -751,52 +795,95 @@
 
                         if (rankings.length === 0) {
                             feedbackBoard.innerHTML = '<p class="text-gray-500">No presenters have been scored yet.</p>';
-                        } else {
-                            rankings.forEach(candidate => {
-                                const feedbackForCandidate = augmentedFeedbacks.filter(f => f.candidateId === candidate.id);
-                                const judgesWhoScored = Object.keys(candidate.scoresByJudge).filter(j => candidate.scoresByJudge[j] > 0);
+                            return;
+                        } 
 
-                                let candidateFeedbackHTML = `<div class="bg-gray-50 p-4 rounded-lg"><h3 class="text-lg font-bold text-indigo-700">${candidate.orderIndex ? `${candidate.orderIndex}. ` : ''}${candidate.name}</h3><div class="mt-3 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">`;
+                        CATEGORY_NAMES.forEach(category => {
+                            const categorySection = document.createElement('div');
+                            categorySection.className = 'mb-8';
+                            
+                            const presentersInCategory = rankings
+                                .filter(r => r.category === category)
+                                .sort((a,b) => (a.session||"").localeCompare(b.session||"") || (a.orderIndex||0) - (b.orderIndex||0));
 
-                                if (judgesWhoScored.length > 0) {
-                                    judgesWhoScored.forEach(judgeName => {
-                                        const judgeFeedback = feedbackForCandidate.find(f => f.judgeName === judgeName);
-                                        const feedbackText = (judgeFeedback && judgeFeedback.feedbackText) ? judgeFeedback.feedbackText : 'No feedback submitted.';
-                                        
-                                        candidateFeedbackHTML += `<div class="bg-white p-3 rounded-md shadow-sm">
-                                            <div class="flex justify-between items-center border-b pb-2 mb-2">
-                                                <p class="font-semibold text-gray-800">${judgeName}</p>
-                                                <p class="font-bold text-gray-600">Score: ${candidate.scoresByJudge[judgeName]}</p>
-                                            </div>
-                                            <p class="text-sm text-gray-600 italic">"${feedbackText}"</p>
-                                        </div>`;
-                                    });
-                                } else {
-                                    candidateFeedbackHTML += `<p class="text-sm text-gray-500 col-span-full">No scores or feedback submitted yet for this presenter.</p>`;
-                                }
-                                candidateFeedbackHTML += `</div></div>`;
-                                feedbackBoard.innerHTML += candidateFeedbackHTML;
-                            });
-                        }
+                            let categoryHTML = `<h3 class="text-2xl font-semibold text-gray-800 mb-4 border-b pb-2">${category} Presentations</h3>`;
+
+                            if (presentersInCategory.length > 0) {
+                                presentersInCategory.forEach(candidate => {
+                                    const feedbackForCandidate = augmentedFeedbacks.filter(f => f.candidateId === candidate.id);
+                                    const judgesWhoScored = Object.keys(candidate.scoresByJudge).filter(j => (candidate.scoresByJudge[j] || 0) > 0);
+
+                                    categoryHTML += `<div class="bg-gray-50 p-4 rounded-lg mb-4">
+                                        <h4 class="text-lg font-bold text-indigo-700">${candidate.orderIndex ? `${candidate.orderIndex}. ` : ''}${candidate.name} <span class="text-sm font-medium text-gray-500">- ${candidate.session}</span></h4>
+                                        <div class="mt-3 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">`;
+
+                                    if (judgesWhoScored.length > 0) {
+                                        judgesWhoScored.forEach(judgeName => {
+                                            const judgeFeedback = feedbackForCandidate.find(f => f.judgeName === judgeName);
+                                            const feedbackText = (judgeFeedback && judgeFeedback.feedbackText) ? judgeFeedback.feedbackText : 'No feedback submitted.';
+                                            
+                                            categoryHTML += `<div class="bg-white p-3 rounded-md shadow-sm">
+                                                <div class="flex justify-between items-center border-b pb-2 mb-2">
+                                                    <p class="font-semibold text-gray-800">${judgeName}</p>
+                                                    <p class="font-bold text-gray-600">Score: ${candidate.scoresByJudge[judgeName]}</p>
+                                                </div>
+                                                <p class="text-sm text-gray-600 italic">"${feedbackText}"</p>
+                                            </div>`;
+                                        });
+                                    } else {
+                                        categoryHTML += `<p class="text-sm text-gray-500 col-span-full">No scores or feedback submitted yet for this presenter.</p>`;
+                                    }
+                                    categoryHTML += `</div></div>`;
+                                });
+                            } else {
+                                categoryHTML += `<p class="text-gray-500 italic">No presenters have been scored in the ${category} category yet.</p>`;
+                            }
+
+                            categorySection.innerHTML = categoryHTML;
+                            feedbackBoard.appendChild(categorySection);
+                        });
                     }
                     
                     async function resetScores() {
-                         if (await showConfirmationModal('Reset All Scores', 'This will delete ALL scores and feedback. This action is irreversible.')) {
-                            const scoresSnapshot = await getDocs(collection(db, `artifacts/${appId}/public/data/scores`));
-                            const feedbackSnapshot = await getDocs(collection(db, `artifacts/${appId}/public/data/feedback`));
+                         if (await showConfirmationModal('Reset All Scores Only?', 'This will delete ALL scores and feedback but will keep the list of presenters. This action is irreversible.')) {
+                             const scoresQuery = query(collection(db, `artifacts/${appId}/public/data/scores`));
+                             const feedbackQuery = query(collection(db, `artifacts/${appId}/public/data/feedback`));
+
+                             const [scoresSnapshot, feedbackSnapshot] = await Promise.all([getDocs(scoresQuery), getDocs(feedbackQuery)]);
+
+                             const batch = writeBatch(db);
+                             scoresSnapshot.docs.forEach(d => batch.delete(d.ref));
+                             feedbackSnapshot.docs.forEach(d => batch.delete(d.ref));
+                             await batch.commit();
+                             alert('All scores and feedback have been reset.');
+                           }
+                    }
+                    
+                    async function handleResetEverything() {
+                        if (await showConfirmationModal('RESET EVERYTHING?', 'This will delete ALL presenters, scores, and feedback. This action is irreversible and will completely wipe the event data.')) {
+                            const [candidatesSnapshot, scoresSnapshot, feedbackSnapshot] = await Promise.all([
+                                getDocs(query(collection(db, `artifacts/${appId}/public/data/candidates`))),
+                                getDocs(query(collection(db, `artifacts/${appId}/public/data/scores`))),
+                                getDocs(query(collection(db, `artifacts/${appId}/public/data/feedback`)))
+                            ]);
+
                             const batch = writeBatch(db);
+                            candidatesSnapshot.docs.forEach(d => batch.delete(d.ref));
                             scoresSnapshot.docs.forEach(d => batch.delete(d.ref));
                             feedbackSnapshot.docs.forEach(d => batch.delete(d.ref));
                             await batch.commit();
-                         }
+                            alert('The entire event has been reset.');
+                        }
                     }
 
                     // --- JUDGE VIEW LOGIC ---
 
                     function initJudgeView() {
-                        const candidatesQuery = query(collection(db, `artifacts/${appId}/public/data/candidates`), where("session", "==", currentJudgeSession), orderBy("orderIndex"));
+                        const candidatesQuery = query(collection(db, `artifacts/${appId}/public/data/candidates`), where("session", "==", currentJudgeSession));
                         unsubscribeCandidates = onSnapshot(candidatesQuery, (snapshot) => {
                             allJudgeCandidates = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                            allJudgeCandidates.sort((a,b) => (a.orderIndex || 0) - (b.orderIndex || 0));
+
                             if (allJudgeCandidates.length > 0 && !currentPresenterId) {
                                 currentPresenterId = allJudgeCandidates[0].id;
                             }
@@ -804,31 +891,6 @@
                             renderCurrentPresenterCard();
                             checkFinalSubmissionStatus();
                         });
-
-                        // Also fetch any scores that might already exist for this judge in this session
-                        fetchAllJudgeScores();
-                    }
-
-                    async function fetchAllJudgeScores() {
-                        const q = query(collection(db, `artifacts/${appId}/public/data/scores`), where("judgeId", "==", currentUser.id));
-                        const scoresSnapshot = await getDocs(q);
-                        scoresSnapshot.forEach(docSnap => {
-                            const scoreData = docSnap.data();
-                            if(!allJudgeScores[scoreData.candidateId]) allJudgeScores[scoreData.candidateId] = {};
-                            allJudgeScores[scoreData.candidateId][scoreData.category] = scoreData.score;
-                        });
-
-                        const feedbackQuery = query(collection(db, `artifacts/${appId}/public/data/feedback`), where("judgeId", "==", currentUser.id));
-                        const feedbackSnapshot = await getDocs(feedbackQuery);
-                        feedbackSnapshot.forEach(docSnap => {
-                            const feedbackData = docSnap.data();
-                            if(!allJudgeScores[feedbackData.candidateId]) allJudgeScores[feedbackData.candidateId] = {};
-                            allJudgeScores[feedbackData.candidateId].feedbackText = feedbackData.feedbackText;
-                        });
-                        
-                        renderJudgeSidebar();
-                        renderCurrentPresenterCard();
-                        checkFinalSubmissionStatus();
                     }
 
                     function renderJudgeSidebar() {
@@ -842,13 +904,11 @@
                         }
 
                         allJudgeCandidates.forEach(c => {
-                            const isScored = allJudgeScores[c.id] && Object.keys(allJudgeScores[c.id]).length > 0;
                             const div = document.createElement('div');
                             div.className = `sidebar-item p-3 rounded-md flex justify-between items-center ${currentPresenterId === c.id ? 'active-card' : ''}`;
                             div.dataset.id = c.id;
                             div.innerHTML = `<span>${c.orderIndex}. ${c.name}</span>
-                                ${isScored ? `<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-green-500" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" /></svg>` : ''}
-                            `;
+                                <span class="score-status-indicator" data-candidate-id="${c.id}"></span>`;
                             div.onclick = () => {
                                 currentPresenterId = c.id;
                                 renderJudgeSidebar();
@@ -856,6 +916,29 @@
                             };
                             listEl.appendChild(div);
                         });
+                        updateAllScoreStatusIndicators();
+                    }
+
+                    function updateAllScoreStatusIndicators() {
+                        allJudgeCandidates.forEach(c => {
+                             updateScoreStatusIndicator(c.id);
+                        });
+                    }
+
+                    function updateScoreStatusIndicator(candidateId) {
+                        const indicator = document.querySelector(`.score-status-indicator[data-candidate-id="${candidateId}"]`);
+                        if (!indicator) return;
+
+                        const candidate = allJudgeCandidates.find(c => c.id === candidateId);
+                        if (!candidate) return;
+
+                        const scores = allJudgeScores[candidateId];
+                        const criteria = CATEGORIES[candidate.category];
+                        const isScored = scores && criteria.every(crit => scores[crit.name] !== null && scores[crit.name] !== undefined);
+                        
+                        indicator.innerHTML = isScored 
+                            ? `<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-green-500" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" /></svg>`
+                            : '';
                     }
 
                     function renderCurrentPresenterCard() {
@@ -878,7 +961,7 @@
 
                         const criteriaHTML = criteria.map(crit => {
                             const fieldId = `score-${presenter.id}-${crit.name.replace(/\W/g, '-')}`;
-                            const existingScore = (allJudgeScores[presenter.id] && allJudgeScores[presenter.id][crit.name]) || '';
+                            const existingScore = (allJudgeScores[presenter.id] && (allJudgeScores[presenter.id][crit.name] !== null && allJudgeScores[presenter.id][crit.name] !== undefined)) ? allJudgeScores[presenter.id][crit.name] : '';
                             return `<div class="space-y-1">
                                 <div class="flex justify-between items-center">
                                     <label for="${fieldId}" class="text-sm font-medium text-gray-800">${crit.name} (Max: ${crit.max})</label>
@@ -908,63 +991,94 @@
                         updateLiveTotal(form); // Initial calculation
                         form.addEventListener('input', (e) => {
                              if (e.target.classList.contains('score-input')) {
-                                const input = e.target;
-                                const max = parseInt(input.dataset.max, 10);
-                                if (parseInt(input.value) > max) input.value = max;
-                                if (parseInt(input.value) < 0) input.value = 0;
-                                updateLiveTotal(form);
-                            }
+                                 const input = e.target;
+                                 const max = parseInt(input.dataset.max, 10);
+                                 if (parseInt(input.value) > max) input.value = max;
+                                 if (parseInt(input.value) < 0) input.value = 0;
+                                 updateLiveTotal(form);
+                             }
                         });
                         form.addEventListener('submit', handleScoreSave);
                     }
                     
                     function updateLiveTotal(form) {
-                         let total = 0;
-                         form.querySelectorAll('.score-input').forEach(i => { total += parseInt(i.value, 10) || 0; });
-                         form.querySelector('.total-score').textContent = total;
+                          let total = 0;
+                          form.querySelectorAll('.score-input').forEach(i => { total += parseInt(i.value, 10) || 0; });
+                          form.querySelector('.total-score').textContent = total;
                     }
                     
-                    function handleScoreSave(e) {
+                    async function handleScoreSave(e) {
                         e.preventDefault();
                         if (isSubmittingScore) return;
                         
                         const form = e.target;
                         const candidateId = form.dataset.candidateId;
                         
-                        if(!allJudgeScores[candidateId]) allJudgeScores[candidateId] = {};
-                        
                         let isComplete = true;
-                        form.querySelectorAll('.score-input').forEach(input => {
-                            const category = input.name;
-                            const score = parseInt(input.value, 10);
-                            if(isNaN(score)) isComplete = false;
-                            allJudgeScores[candidateId][category] = isNaN(score) ? null : score;
+                        
+                        const batch = writeBatch(db);
+                        const candidate = allJudgeCandidates.find(c => c.id === candidateId);
+                        if (!candidate) return;
+
+                        const criteria = CATEGORIES[candidate.category];
+                        criteria.forEach(crit => {
+                             const input = form.querySelector(`[name="${crit.name}"]`);
+                             const score = parseInt(input.value, 10);
+                             if (isNaN(score)) {
+                                 isComplete = false;
+                             } else {
+                                 const scoreId = `${candidateId}-${currentUser.id}-${crit.name.replace(/\W/g, '-')}`;
+                                 const scoreRef = doc(db, `artifacts/${appId}/public/data/scores`, scoreId);
+                                 batch.set(scoreRef, { candidateId, judgeId: currentUser.id, judgeName: currentUser.name, category: crit.name, score: score });
+                             }
                         });
 
+
                         if (!isComplete) {
-                            alert('Please fill in all score fields for this presenter.');
+                            alert('Please fill in all score fields for this presenter before moving to the next.');
                             return;
                         }
+
+                        const feedbackText = form.querySelector('textarea').value;
+                        const feedbackId = `${candidateId}_${currentUser.id}`;
+                        const feedbackRef = doc(db, `artifacts/${appId}/public/data/feedback`, feedbackId);
+                        batch.set(feedbackRef, { candidateId, judgeId: currentUser.id, feedbackText: feedbackText });
                         
-                        allJudgeScores[candidateId].feedbackText = form.querySelector('textarea').value;
+                        try {
+                            await batch.commit();
+                            updatePresence(); // Refresh online status on activity
+                            
+                            // Immediately update local state
+                            const scores = {};
+                             criteria.forEach(crit => {
+                                 const input = form.querySelector(`[name="${crit.name}"]`);
+                                 scores[crit.name] = parseInt(input.value, 10);
+                             });
+                            scores.feedbackText = feedbackText;
+                            allJudgeScores[candidateId] = scores;
 
-                        // Move to the next presenter
-                        const currentIndex = allJudgeCandidates.findIndex(c => c.id === candidateId);
-                        if (currentIndex < allJudgeCandidates.length - 1) {
-                            currentPresenterId = allJudgeCandidates[currentIndex + 1].id;
-                        } else {
-                            // Last presenter, stay on this card
-                            alert('All presenters for this session have been scored. Review your scores and then click "Confirm All Scores".');
+
+                            // Move to the next presenter
+                            const currentIndex = allJudgeCandidates.findIndex(c => c.id === candidateId);
+                            if (currentIndex < allJudgeCandidates.length - 1) {
+                                currentPresenterId = allJudgeCandidates[currentIndex + 1].id;
+                                renderCurrentPresenterCard();
+                            } else {
+                                alert('All presenters for this session have been scored. Review your scores and then click "Submit All Scores".');
+                            }
+                            renderJudgeSidebar();
+                            checkFinalSubmissionStatus();
+
+                        } catch(err) {
+                            console.error("Error saving score:", err);
+                            alert("There was an error saving the score. Please try again.");
                         }
-
-                        renderJudgeSidebar();
-                        renderCurrentPresenterCard();
-                        checkFinalSubmissionStatus();
                     }
                     
                     function checkFinalSubmissionStatus() {
                         const submitButton = document.getElementById('final-submit-button');
                         if(!submitButton) return;
+
                         const allScored = allJudgeCandidates.every(c => {
                            const scores = allJudgeScores[c.id];
                            if (!scores) return false;
@@ -976,52 +1090,17 @@
                     }
                     
                     async function handleFinalSubmit() {
-                        if (isSubmittingScore) return;
-
-                        const confirmationMessage = `You are about to submit all scores for this session. This action cannot be undone. Are you sure?`;
+                        const confirmationMessage = `You are confirming that all scores for this session are final. This action cannot be undone. Are you sure?`;
                         if (await showConfirmationModal('Final Submission', confirmationMessage)) {
-                            isSubmittingScore = true;
                             const submitButton = document.getElementById('final-submit-button');
-                            submitButton.textContent = 'Submitting...';
+                            submitButton.textContent = 'SUBMITTED';
                             submitButton.disabled = true;
+                            submitButton.classList.remove('bg-green-600', 'hover:bg-green-700');
+                            submitButton.classList.add('bg-gray-400', 'cursor-not-allowed');
 
-                            const batch = writeBatch(db);
-
-                            for (const candidateId in allJudgeScores) {
-                                const scores = allJudgeScores[candidateId];
-                                const candidate = allJudgeCandidates.find(c => c.id === candidateId);
-                                if (!candidate) continue;
-
-                                const criteria = CATEGORIES[candidate.category];
-                                criteria.forEach(crit => {
-                                     const score = scores[crit.name];
-                                     if(score !== null && score !== undefined) {
-                                        const scoreId = `${candidateId}-${currentUser.id}-${crit.name.replace(/\W/g, '-')}`;
-                                        const scoreRef = doc(db, `artifacts/${appId}/public/data/scores`, scoreId);
-                                        batch.set(scoreRef, { candidateId, judgeId: currentUser.id, judgeName: currentUser.name, category: crit.name, score: score });
-                                     }
-                                });
-                                
-                                const feedbackText = scores.feedbackText || '';
-                                const feedbackId = `${candidateId}_${currentUser.id}`;
-                                const feedbackRef = doc(db, `artifacts/${appId}/public/data/feedback`, feedbackId);
-                                batch.set(feedbackRef, { candidateId, judgeId: currentUser.id, feedbackText: feedbackText });
-                            }
-
-                            try {
-                                await batch.commit();
-                                alert('All scores submitted successfully!');
-                                // Optionally, disable further editing or log out
-                                document.getElementById('judge-presenter-card').innerHTML = `<p class="text-center text-2xl text-green-600 font-bold">Thank you! Your scores for this session have been submitted.</p>`;
-                                document.getElementById('final-submit-button').textContent = 'Submitted';
-                            } catch (error) {
-                                console.error("Error submitting final scores:", error);
-                                alert("An error occurred during final submission. Please try again.");
-                                submitButton.textContent = 'Confirm All Scores';
-                                submitButton.disabled = false;
-                            } finally {
-                                isSubmittingScore = false;
-                            }
+                             document.getElementById('judge-presenter-card').innerHTML = `<p class="text-center text-2xl text-green-600 font-bold">Thank you! Your scores for this session have been submitted.</p>`;
+                             // Optionally disable sidebar clicks
+                             document.querySelectorAll('.sidebar-item').forEach(item => item.style.pointerEvents = 'none');
                         }
                     }
 
@@ -1044,6 +1123,133 @@
                         });
                     }
                     
+                    function generatePDF() {
+                        const { jsPDF } = window.jspdf;
+                        const doc = new jsPDF();
+                        let y = 15;
+
+                        doc.setFontSize(22);
+                        doc.text("PPKBIS Showcase - Official Results", 105, y, { align: 'center' });
+                        y += 10;
+                        doc.setFontSize(12);
+                        doc.text(new Date().toLocaleString(), 105, y, { align: 'center' });
+                        y += 15;
+                        
+                        // --- Data processing for PDF ---
+                        const results = adminCandidates.map(c => {
+                             const scoresByJudge = {};
+                             const judges = [...new Set(adminScores.map(s => s.judgeName))];
+                             judges.forEach(j => {
+                                 const judgeScores = adminScores.filter(s => s.candidateId === c.id && s.judgeName === j);
+                                 scoresByJudge[j] = judgeScores.reduce((sum, s) => sum + (s.score || 0), 0);
+                             });
+                             const totalScores = Object.values(scoresByJudge).filter(s => s > 0);
+                             const judgeCount = totalScores.length;
+                             const average = judgeCount > 0 ? totalScores.reduce((a, b) => a + b, 0) / judgeCount : 0;
+                             return { ...c, scoresByJudge, average, judgeCount };
+                        });
+                        const fullyJudged = results.filter(r => r.judgeCount === FIXED_JUDGE_COUNT);
+
+                        const { categoryWinners } = calculateWinners(fullyJudged);
+                        const grandWinners = [...fullyJudged].sort((a,b) => b.average - a.average).slice(0, 3);
+
+
+                        // --- Winners Summary Section ---
+                        doc.setFontSize(16);
+                        doc.text("Winners Summary", 14, y);
+                        y += 8;
+
+                        doc.setFontSize(12);
+                        doc.text("Top 3 Grand Winners:", 14, y);
+                        y += 6;
+                        doc.setFontSize(10);
+                        if (grandWinners.length > 0) {
+                            grandWinners.forEach((winner, index) => {
+                                doc.text(`${index + 1}. ${winner.name} (${winner.category}) - Avg: ${winner.average.toFixed(2)}`, 18, y);
+                                y += 6;
+                            });
+                        } else {
+                            doc.text("N/A - Awaiting scores from all judges.", 18, y);
+                            y += 6;
+                        }
+                        y += 4;
+                        
+                        Object.keys(categoryWinners).forEach(cat => {
+                            if (y > 270) { doc.addPage(); y = 15; }
+                            const winners = categoryWinners[cat];
+                            doc.setFontSize(12);
+                            doc.text(`${cat} Category Winners:`, 14, y);
+                            y += 6;
+                            doc.setFontSize(10);
+                            doc.text(`Gold: ${winners.gold.map(w => w.name).join(', ') || 'None'}`, 18, y);
+                            y += 6;
+                            doc.text(`Silver: ${winners.silver.map(w => w.name).join(', ') || 'None'}`, 18, y);
+                            y += 6;
+                            doc.text(`Bronze: ${winners.bronze.map(w => w.name).join(', ') || 'None'}`, 18, y);
+                            y += 10;
+                        });
+
+                        // --- Rankings Table Section ---
+                        doc.addPage();
+                        y = 15;
+                        doc.setFontSize(16);
+                        doc.text("Overall Rankings", 14, y);
+                        y += 8;
+                        
+                        const allJudges = [...new Set(adminScores.map(s => s.judgeName))].sort();
+                        const { winnerMap } = calculateWinners(fullyJudged); // Recalculate to get the map
+
+                        const head = [['#', 'Presenter', 'Session', ...allJudges, 'Avg.', 'Award']];
+                        const body = results.sort((a,b) => b.average - a.average).map(r => {
+                            const award = winnerMap.get(r.id)?.level || '-';
+                            return [
+                                r.orderIndex,
+                                r.name,
+                                r.session,
+                                ...allJudges.map(j => r.scoresByJudge[j] || '-'),
+                                r.average.toFixed(2),
+                                award
+                            ];
+                        });
+
+                        doc.autoTable({ startY: y, head, body });
+                        
+                        // --- Feedback Section ---
+                        doc.addPage();
+                        y = 15;
+                        doc.setFontSize(16);
+                        doc.text("Detailed Feedback", 14, y);
+                        y+= 8;
+                        
+                        adminCandidates.sort((a,b) => (a.session||"").localeCompare(b.session||"") || (a.orderIndex||0) - (b.orderIndex||0)).forEach(c => {
+                           const feedbacksForCandidate = adminFeedbacks.filter(f => f.candidateId === c.id);
+                           if (y > 270) {
+                               doc.addPage();
+                               y = 15;
+                           }
+                           doc.setFontSize(12);
+                           doc.text(`${c.orderIndex}. ${c.name} (${c.session})`, 14, y);
+                           y += 6;
+                           doc.setFontSize(10);
+                           if (feedbacksForCandidate.length > 0) {
+                               feedbacksForCandidate.forEach(f => {
+                                   if (y > 280) { doc.addPage(); y = 15; }
+                                   const judgeName = [...new Set(adminScores.filter(s => s.judgeId === f.judgeId).map(s => s.judgeName))][0] || 'Unknown Judge';
+                                   const textLines = doc.splitTextToSize(`${judgeName}: ${f.feedbackText || 'No feedback submitted.'}`, 170);
+                                   doc.text(textLines, 18, y);
+                                   y += (textLines.length * 4) + 2;
+                               });
+                           } else {
+                               doc.text(`No feedback submitted for this presenter.`, 18, y);
+                               y+=5;
+                           }
+                           y+=4;
+                        });
+
+
+                        doc.save('PPKBIS_Showcase_Results.pdf');
+                    }
+                    
                     // --- Initial Event Listeners ---
                     document.getElementById('login-form').addEventListener('submit', handleLogin);
                     document.getElementById('role').addEventListener('change', (e) => {
@@ -1057,11 +1263,16 @@
                         candidateSessionSelect.addEventListener('change', (e) => {
                             updateCategoryDropdown(e.target.value);
                         });
-                        updateCategoryDropdown(candidateSessionSelect.value);
+                        // Initialize based on default or first value
+                        if(candidateSessionSelect.value) {
+                           updateCategoryDropdown(candidateSessionSelect.value);
+                        }
                     }
 
                     document.getElementById('add-candidate-form').addEventListener('submit', handleAddCandidate);
-                    document.getElementById('reset-button').addEventListener('click', resetScores);
+                    document.getElementById('reset-scores-button').addEventListener('click', resetScores);
+                    document.getElementById('reset-all-button').addEventListener('click', handleResetEverything);
+                    document.getElementById('download-pdf-button').addEventListener('click', generatePDF);
                     document.getElementById('admin-logout').addEventListener('click', handleLogout);
                     document.getElementById('judge-logout').addEventListener('click', handleLogout);
                     
